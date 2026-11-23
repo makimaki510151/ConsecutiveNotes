@@ -53,19 +53,20 @@
 
   function createState() {
     return {
-      started: false,
+      engaged: false,
       level: 0,
       segment: 0,
       total: 0,
       clock: 0,
       spawnAcc: 0,
-      notes: [],
+      notes: [{ dist: 1 }],
       storyDone: false,
       inputLock: 0,
     };
   }
 
   function wipe(state) {
+    const engaged = !!state.engaged;
     state.level = 0;
     state.segment = 0;
     state.total = 0;
@@ -74,6 +75,7 @@
     state.notes = [];
     state.storyDone = false;
     state.inputLock = 0;
+    state.engaged = engaged;
   }
 
   function arm(state) {
@@ -96,16 +98,26 @@
     return best;
   }
 
-  function press(state) {
-    if (!state.started) {
-      state.started = true;
-      arm(state);
-      return [{ type: 'start' }];
+  function advanceNotes(state, dt) {
+    const step = dt / approachDuration(state.level);
+    for (let i = 0; i < state.notes.length; i++) state.notes[i].dist -= step;
+    state.spawnAcc += dt;
+    const interval = spawnInterval(state.level);
+    let spawned = 0;
+    while (state.spawnAcc >= interval && spawned++ < 8) {
+      state.spawnAcc -= interval;
+      state.notes.push({ dist: 1 });
     }
+  }
+
+  function press(state) {
+    const opening = !state.engaged;
+    state.engaged = true;
     const index = nearestIndex(state);
     if (index < 0) {
-      if (state.inputLock > 0) return [];
+      if (!opening && state.inputLock > 0) return [];
       arm(state);
+      state.engaged = true;
       return [{ type: 'empty' }];
     }
     state.notes.splice(index, 1);
@@ -114,7 +126,16 @@
 
   function tick(state, dt) {
     const events = [];
-    if (!state.started || !(dt > 0)) return events;
+    if (!(dt > 0)) return events;
+    if (!state.engaged) {
+      advanceNotes(state, dt);
+      const keep = [];
+      for (let i = 0; i < state.notes.length; i++) {
+        if (state.notes[i].dist > -0.45) keep.push(state.notes[i]);
+      }
+      state.notes = keep;
+      return events;
+    }
     if (state.inputLock > 0) state.inputLock = Math.max(0, state.inputLock - dt);
 
     state.clock += dt;
@@ -133,21 +154,13 @@
       events.push({ type: 'complete' });
     }
 
-    const step = dt / approachDuration(state.level);
-    for (let i = 0; i < state.notes.length; i++) state.notes[i].dist -= step;
-
-    state.spawnAcc += dt;
-    const interval = spawnInterval(state.level);
-    let spawned = 0;
-    while (state.spawnAcc >= interval && spawned++ < 8) {
-      state.spawnAcc -= interval;
-      state.notes.push({ dist: 1 });
-    }
+    advanceNotes(state, dt);
 
     const win = hitWindowDist(state.level);
     for (let i = 0; i < state.notes.length; i++) {
       if (state.notes[i].dist < -win) {
         arm(state);
+        state.engaged = true;
         events.push({ type: 'miss' });
         return events;
       }
