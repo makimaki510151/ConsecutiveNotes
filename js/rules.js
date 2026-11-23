@@ -40,6 +40,12 @@
     return hitWindowSeconds(level) / approachDuration(level);
   }
 
+  function progressPercent(total) {
+    if (!(total > 0)) return 0;
+    if (total >= STORY_SECONDS) return 100;
+    return Math.floor((total / STORY_SECONDS) * 100);
+  }
+
   function progressAt(total) {
     let level = 0;
     let consumed = 0;
@@ -180,6 +186,7 @@
     hitWindowSeconds: hitWindowSeconds,
     hitWindowDist: hitWindowDist,
     progressAt: progressAt,
+    progressPercent: progressPercent,
     createState: createState,
     press: press,
     tick: tick,

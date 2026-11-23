@@ -213,6 +213,15 @@ assert.strictEqual(opening.total, 0);
 assert.strictEqual(opening.notes.length, waiting - 1);
 assert.ok(opening.notes.some((note) => note.dist > 0.4), 'the rest of the stream stays');
 
+assert.strictEqual(Rules.progressPercent(0), 0);
+assert.strictEqual(Rules.progressPercent(-3), 0);
+assert.strictEqual(Rules.progressPercent(17.9), 0);
+assert.strictEqual(Rules.progressPercent(18), 1);
+assert.strictEqual(Rules.progressPercent(900), 50);
+assert.strictEqual(Rules.progressPercent(1799), 99);
+assert.strictEqual(Rules.progressPercent(1800), 100);
+assert.strictEqual(Rules.progressPercent(2400), 100);
+
 console.log('rules ok', {
   hitsAt30Min: ending.tally.hits,
   speedAtStoryEnd: Number(Rules.speedMultiplier(18).toFixed(3)),

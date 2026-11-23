@@ -30,6 +30,19 @@ canvas {
   -webkit-tap-highlight-color: transparent;
 }
 
+#best {
+  position: fixed;
+  z-index: 2;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  margin: 0;
+  color: rgba(232, 238, 252, 0.86);
+  font: 600 15px/28px ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  user-select: none;
+}
+
 #volume {
   position: fixed;
   z-index: 2;

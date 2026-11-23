@@ -131,6 +131,7 @@
     if (fx.ringOn) fx.ringT += dt;
     updateBursts(dt);
     apply(Rules.tick(state, dt));
+    noteProgress();
     Story.tick(dt, shownTime(), anim, viewW, viewH);
   }
 
@@ -288,6 +289,45 @@
     if (event.target && event.target.id === 'volume') return;
     event.preventDefault();
   }, { passive: false });
+
+  const bestEl = document.getElementById('best');
+  let bestSeconds = savedBest();
+  let shownPercent = Rules.progressPercent(bestSeconds);
+
+  function savedBest() {
+    try {
+      const saved = Number(localStorage.getItem('cn-best'));
+      if (saved > 0 && saved < Infinity) return saved;
+    } catch (err) {
+      // 記録が読めなくても、今回の進行から覚え直す。
+    }
+    return 0;
+  }
+
+  function persistBest() {
+    try {
+      localStorage.setItem('cn-best', String(bestSeconds));
+    } catch (err) {
+      // 保存できなくても、画面の記録はこのページでは残る。
+    }
+  }
+
+  function showBest() {
+    bestEl.textContent = shownPercent + '%';
+  }
+
+  function noteProgress() {
+    if (!(state.total > bestSeconds)) return;
+    bestSeconds = state.total;
+    const next = Rules.progressPercent(bestSeconds);
+    if (next === shownPercent) return;
+    shownPercent = next;
+    showBest();
+    persistBest();
+  }
+
+  showBest();
+
   const volume = document.getElementById('volume');
 
   function savedVolume() {
@@ -336,9 +376,12 @@
     event.preventDefault();
   });
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) AudioBus.suspend();
-    else AudioBus.resume();
+    if (document.hidden) {
+      persistBest();
+      AudioBus.suspend();
+    } else AudioBus.resume();
   });
+  window.addEventListener('pagehide', persistBest);
 
   resize();
   render();
