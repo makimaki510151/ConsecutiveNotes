@@ -122,7 +122,6 @@
     updateBursts(dt);
     apply(Rules.tick(state, dt));
     Story.tick(dt, shownTime(), anim, viewW, viewH);
-    if (state.engaged) AudioBus.follow(state.total, state.level);
   }
 
   function roundRect(x, y, w, h, r) {

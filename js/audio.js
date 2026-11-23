@@ -1,6 +1,6 @@
 'use strict';
 
-// 成功音、加速の音色変化、世界の低い持続音。ファイルは使わない。
+// 成功音と加速、ミスの短い音。ファイルは使わない。
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -8,10 +8,6 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   let ctx = null;
   let master = null;
-  let padGain = null;
-  let padFilter = null;
-  let padA = null;
-  let padB = null;
   let noiseBuf = null;
 
   function hitFreq(level) {
@@ -87,53 +83,11 @@
       comp.release.value = 0.16;
       master.connect(comp);
       comp.connect(ctx.destination);
-
-      padFilter = ctx.createBiquadFilter();
-      padFilter.type = 'lowpass';
-      padFilter.frequency.value = 240;
-      padFilter.Q.value = 0.5;
-      padGain = ctx.createGain();
-      padGain.gain.value = 0.0001;
-      padGain.connect(padFilter);
-      padFilter.connect(master);
-
-      padA = ctx.createOscillator();
-      padB = ctx.createOscillator();
-      padA.type = 'sine';
-      padB.type = 'sine';
-      padA.frequency.value = 98;
-      padB.frequency.value = 98.6;
-      const quiet = ctx.createGain();
-      quiet.gain.value = 0.65;
-      padA.connect(padGain);
-      padB.connect(quiet);
-      quiet.connect(padGain);
-      padA.start();
-      padB.start();
-
-      const now = ctx.currentTime;
-      padGain.gain.setValueAtTime(0.0001, now);
-      padGain.gain.setTargetAtTime(0.032, now, 0.7);
     }
     if (ctx.state === 'suspended') ctx.resume();
     } catch (err) {
       ctx = null;
     }
-  }
-
-  function follow(total, level) {
-    if (!ctx) return;
-    try { followNow(total, level); } catch (err) { ctx = null; }
-  }
-
-  function followNow(total, level) {
-    const now = ctx.currentTime;
-    const progress = Math.max(0, Math.min(1, total / (30 * 60)));
-    const fund = 96 + progress * 36 + level * 0.35;
-    padA.frequency.setTargetAtTime(fund, now, 0.35);
-    padB.frequency.setTargetAtTime(fund * 1.004, now, 0.35);
-    padFilter.frequency.setTargetAtTime(220 + progress * 1500, now, 0.45);
-    padGain.gain.setTargetAtTime(0.028 + progress * 0.02, now, 0.4);
   }
 
   function hit(level) {
@@ -194,10 +148,6 @@
       osc.disconnect();
       gain.disconnect();
     };
-    padA.frequency.setTargetAtTime(96, now, 0.06);
-    padB.frequency.setTargetAtTime(96.4, now, 0.06);
-    padFilter.frequency.setTargetAtTime(220, now, 0.08);
-    padGain.gain.setTargetAtTime(0.03, now, 0.1);
   }
 
   function complete() {
@@ -223,7 +173,6 @@
 
   return {
     ensure: ensure,
-    follow: follow,
     hit: hit,
     accel: accel,
     miss: miss,
