@@ -23,3 +23,21 @@ canvas {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
+
+#volume {
+  position: fixed;
+  z-index: 2;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  width: min(34vw, 168px);
+  height: 28px;
+  margin: 0;
+  padding: 0 8px;
+  border: 1px solid rgba(213, 226, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(6, 8, 14, 0.72);
+  accent-color: #e8eefc;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}

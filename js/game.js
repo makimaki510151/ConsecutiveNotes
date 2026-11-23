@@ -269,13 +269,46 @@
     resize();
     render();
   });
+  const volume = document.getElementById('volume');
+
+  function savedVolume() {
+    try {
+      const saved = localStorage.getItem('cn-volume');
+      const next = Number(saved);
+      if (saved != null && next >= 0 && next <= 1) return next;
+    } catch (err) {
+      // 保存が読めなくても、初期音量で鳴らせる。
+    }
+    return 0.85;
+  }
+
+  function applyVolume(value) {
+    AudioBus.setVolume(value);
+    volume.value = String(AudioBus.volume());
+  }
+
+  applyVolume(savedVolume());
+  volume.addEventListener('input', function () {
+    applyVolume(Number(volume.value));
+    try {
+      localStorage.setItem('cn-volume', volume.value);
+    } catch (err) {
+      // 保存できなくても、いまの音量はその場で変わる。
+    }
+  });
+  volume.addEventListener('pointerdown', function (event) {
+    event.stopPropagation();
+  });
+
   window.addEventListener('keydown', function (event) {
+    if (event.target && event.target.id === 'volume') return;
     if (event.code !== 'Space' && event.key !== ' ') return;
     event.preventDefault();
     if (event.repeat) return;
     onPress();
   });
   window.addEventListener('pointerdown', function (event) {
+    if (event.target && event.target.id === 'volume') return;
     if (event.button !== 0 || event.isPrimary === false) return;
     event.preventDefault();
     onPress();
