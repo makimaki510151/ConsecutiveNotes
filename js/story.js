@@ -989,14 +989,6 @@
     }
     ctx.restore();
 
-    if (fx && fx.dawn > 0.01) {
-      const bloom = ctx.createRadialGradient(w * 0.5, L.horizon, 10, w * 0.5, L.horizon, w * 0.6);
-      bloom.addColorStop(0, 'rgba(255, 178, 120,' + fx.dawn * 0.5 + ')');
-      bloom.addColorStop(1, 'rgba(255, 140, 80, 0)');
-      ctx.fillStyle = bloom;
-      ctx.fillRect(0, 0, w, h);
-    }
-
     if (fx && fx.ringOn && fx.ringT >= 0 && fx.ringT < 5.6) {
       const p = fx.ringT / 5.6;
       ctx.beginPath();

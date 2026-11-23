@@ -12,7 +12,7 @@ function approx(actual, expected, eps) {
 
 function play(seconds) {
   const state = Rules.createState();
-  Rules.press(state);
+  state.engaged = true;
   const dt = 1 / 60;
   const steps = Math.round(seconds / dt);
   const tally = { hits: 0, accels: 0, misses: 0, empties: 0, completes: 0 };
@@ -143,6 +143,35 @@ const after = play(1901);
 assert.strictEqual(after.tally.completes, 1);
 assert.strictEqual(after.state.level, 19);
 assert.strictEqual(after.tally.misses, 0);
+
+const idle = Rules.createState();
+assert.strictEqual(idle.engaged, false);
+let idleMiss = 0;
+for (let i = 0; i < 5 * 60; i++) {
+  const ev = Rules.tick(idle, dt);
+  if (ev.some((e) => e.type === 'miss' || e.type === 'accel')) idleMiss += 1;
+}
+assert.strictEqual(idleMiss, 0);
+assert.strictEqual(idle.total, 0);
+assert.strictEqual(idle.level, 0);
+assert.strictEqual(idle.engaged, false);
+assert.ok(idle.notes.length >= 2, 'notes keep arriving before the first click');
+assert.ok(
+  idle.notes.every((note) => note.dist > -0.45),
+  'passed notes leave without resetting the run'
+);
+
+const opening = Rules.createState();
+while (!opening.notes.some((note) => Math.abs(note.dist) <= Rules.hitWindowDist(0))) {
+  Rules.tick(opening, dt);
+}
+const waiting = opening.notes.length;
+const opened = Rules.press(opening);
+assert.strictEqual(opened[0].type, 'hit');
+assert.strictEqual(opening.engaged, true);
+assert.strictEqual(opening.total, 0);
+assert.strictEqual(opening.notes.length, waiting - 1);
+assert.ok(opening.notes.some((note) => note.dist > 0.4), 'the rest of the stream stays');
 
 console.log('rules ok', {
   hitsAt30Min: ending.tally.hits,
