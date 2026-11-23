@@ -149,14 +149,26 @@ const resumed = Rules.press(missed);
 assert.strictEqual(resumed[0].type, 'hit');
 assert.strictEqual(missed.engaged, true);
 assert.strictEqual(missed.level, 0);
+const duplicate = Rules.press(missed);
+assert.deepStrictEqual(duplicate, []);
+assert.strictEqual(missed.engaged, true);
+assert.ok(missed.notes.length > 1, 'the extra tap does not clear the stream');
 
 const fresh = Rules.createState();
-Rules.press(fresh);
-const ignored = Rules.press(fresh);
-assert.deepStrictEqual(ignored, []);
+for (let i = 0; i < 90; i++) Rules.tick(fresh, dt);
+const flowing = fresh.notes.map((note) => note.dist);
+const untouched = Rules.press(fresh);
+assert.deepStrictEqual(untouched, []);
 assert.strictEqual(fresh.engaged, false);
-assert.strictEqual(fresh.notes[0].dist, 1);
-assert.strictEqual(fresh.total, 0);
+assert.deepStrictEqual(fresh.notes.map((note) => note.dist), flowing);
+assert.ok(flowing.length > 1, 'an early press leaves the flowing notes in place');
+
+const locked = Rules.createState();
+locked.engaged = true;
+const emptiedNow = Rules.press(locked);
+assert.strictEqual(emptiedNow[0].type, 'empty');
+assert.deepStrictEqual(Rules.press(locked), []);
+assert.strictEqual(locked.notes[0].dist, 1);
 
 const ending = play(1801);
 assert.strictEqual(ending.tally.misses, 0);

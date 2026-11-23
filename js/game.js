@@ -14,10 +14,20 @@
   let acc = 0;
   const STEP = 1000 / 60;
 
+  function viewportBox() {
+    const vv = window.visualViewport;
+    const width = vv && vv.width ? vv.width : window.innerWidth;
+    const height = vv && vv.height ? vv.height : window.innerHeight;
+    return { w: Math.max(1, width), h: Math.max(1, height) };
+  }
+
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    viewW = Math.max(1, window.innerWidth);
-    viewH = Math.max(1, window.innerHeight);
+    const box = viewportBox();
+    viewW = box.w;
+    viewH = box.h;
+    canvas.style.width = viewW + 'px';
+    canvas.style.height = viewH + 'px';
     canvas.width = Math.round(viewW * dpr);
     canvas.height = Math.round(viewH * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -265,10 +275,19 @@
     if (steps > 0) render();
   }
 
-  window.addEventListener('resize', function () {
+  function onResize() {
     resize();
     render();
-  });
+  }
+  window.addEventListener('resize', onResize);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', onResize);
+    window.visualViewport.addEventListener('scroll', onResize);
+  }
+  window.addEventListener('touchmove', function (event) {
+    if (event.target && event.target.id === 'volume') return;
+    event.preventDefault();
+  }, { passive: false });
   const volume = document.getElementById('volume');
 
   function savedVolume() {

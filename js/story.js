@@ -48,15 +48,15 @@
     {
       t: 0,
       skyTop: '#07060d',
-      skyMid: '#0b0a12',
-      skyHor: '#12111a',
-      ground: '#0b0a10',
-      hillFar: '#12121a',
-      hillNear: '#0e0e14',
+      skyMid: '#14131e',
+      skyHor: '#2a2740',
+      ground: '#16141e',
+      hillFar: '#3c3a52',
+      hillNear: '#2a2838',
       canopy: '#1a1c18',
       fig: '#1a1720',
       note: '#d7def0',
-      star: 0.2,
+      star: 0.62,
       sun: 0,
       sunX: 0.2,
       sunAlt: 0,
@@ -85,7 +85,7 @@
       dust: 0.35,
       kite: 0,
     },
-    { t: 16, star: 0.34, dust: 0.4 },
+    { t: 16, star: 0.72, dust: 0.4 },
     { t: 28, skyHor: '#2a1c22', sun: 0.08, sunAlt: 0.02, star: 0.42 },
     {
       t: 36,
@@ -498,14 +498,17 @@
   }
 
   function layout(w, h) {
-    const laneH = Math.max(58, h * 0.112);
-    const laneY = h * 0.835;
+    const short = h < 520;
+    const laneH = short ? Math.max(42, Math.min(h * 0.16, 72)) : Math.max(58, h * 0.112);
+    const laneY = short ? h - laneH * 0.58 : h * 0.835;
+    const horizon = short ? Math.min(h * 0.42, laneY - laneH) : h * 0.58;
+    const feet = short ? horizon + (laneY - laneH * 0.5 - horizon) * 0.72 : h * 0.735;
     return {
-      horizon: h * 0.58,
+      horizon: horizon,
       laneH: laneH,
       laneY: laneY,
-      feet: h * 0.735,
-      judgeX: Math.max(86, w * 0.22),
+      feet: feet,
+      judgeX: Math.max(Math.min(86, w * 0.24), w * 0.22),
       spawnX: w + 46,
     };
   }
@@ -825,8 +828,10 @@
       ctx.restore();
     }
 
-    hill(ctx, w, L.horizon, css(s.hillFar), h * 0.045, h * 0.05, 320, 0.4);
-    hill(ctx, w, L.horizon, css(s.hillNear), h * 0.03, h * 0.012, 210, 1.7);
+    const farAmp = Math.max(22, h * 0.05);
+    const nearAmp = Math.max(14, h * 0.032);
+    hill(ctx, w, L.horizon, css(s.hillFar), farAmp, Math.max(26, h * 0.055), 320, 0.4);
+    hill(ctx, w, L.horizon, css(s.hillNear), nearAmp, Math.max(12, h * 0.016), 210, 1.7);
 
     const ground = ctx.createLinearGradient(0, L.horizon, 0, h);
     ground.addColorStop(0, css(scale(s.ground, 1.08)));
