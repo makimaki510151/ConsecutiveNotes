@@ -9,6 +9,7 @@
   let ctx = null;
   let master = null;
   let noiseBuf = null;
+  let level = 0.85;
 
   function hitFreq(level) {
     const steps = [0, 2, 4, 7, 9];
@@ -74,7 +75,7 @@
     if (!ctx) {
       ctx = new AC({ latencyHint: 'interactive' });
       master = ctx.createGain();
-      master.gain.value = 0.85;
+      master.gain.value = level;
       const comp = ctx.createDynamicsCompressor();
       comp.threshold.value = -12;
       comp.knee.value = 16;
@@ -163,6 +164,16 @@
     }
   }
 
+  function setVolume(value) {
+    const next = Number(value);
+    level = next >= 0 && next <= 1 ? next : level;
+    if (master) master.gain.value = level;
+  }
+
+  function volume() {
+    return level;
+  }
+
   function suspend() {
     if (ctx && ctx.state === 'running') ctx.suspend();
   }
@@ -173,6 +184,8 @@
 
   return {
     ensure: ensure,
+    setVolume: setVolume,
+    volume: volume,
     hit: hit,
     accel: accel,
     miss: miss,
