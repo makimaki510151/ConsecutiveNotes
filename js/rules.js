@@ -116,14 +116,16 @@
   }
 
   function press(state) {
-    if (!state.engaged && state.inputLock > 0) return [];
-    state.engaged = true;
     const index = nearestIndex(state);
     if (index < 0) {
+      if (!state.engaged || state.inputLock > 0) return [];
       arm(state);
       return [{ type: 'empty' }];
     }
+    const opening = !state.engaged;
+    state.engaged = true;
     state.notes.splice(index, 1);
+    if (opening) state.inputLock = INPUT_LOCK;
     return [{ type: 'hit', level: state.level }];
   }
 
