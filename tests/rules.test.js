@@ -85,7 +85,7 @@ approx(quarter.state.segment, 5, 0.05);
 approx(quarter.state.total, 15, 0.05);
 
 const emptied = Rules.createState();
-Rules.press(emptied);
+emptied.engaged = true;
 const dt = 1 / 60;
 for (let i = 0; i < 15 * 60; i++) {
   Rules.tick(emptied, dt);
@@ -106,9 +106,19 @@ assert.strictEqual(emptied.total, 0);
 assert.strictEqual(emptied.storyDone, false);
 assert.strictEqual(emptied.notes.length, 1);
 assert.strictEqual(emptied.notes[0].dist, 1);
+assert.strictEqual(emptied.engaged, false);
+let emptyAgain = 0;
+for (let i = 0; i < 5 * 60; i++) {
+  const ev = Rules.tick(emptied, dt);
+  if (ev.some((e) => e.type === 'miss')) emptyAgain += 1;
+}
+assert.strictEqual(emptyAgain, 0);
+assert.strictEqual(emptied.engaged, false);
+assert.strictEqual(emptied.total, 0);
+assert.ok(emptied.notes.length >= 2, 'after an empty hit the stream flows until the next click');
 
 const missed = Rules.createState();
-Rules.press(missed);
+missed.engaged = true;
 let sawMiss = false;
 for (let i = 0; i < 60 * 4; i++) {
   const ev = Rules.tick(missed, dt);
@@ -121,12 +131,30 @@ assert.strictEqual(sawMiss, true);
 assert.strictEqual(missed.level, 0);
 assert.strictEqual(missed.total, 0);
 assert.strictEqual(missed.segment, 0);
+assert.strictEqual(missed.engaged, false);
 assert.strictEqual(missed.notes[0].dist, 1);
+let missAgain = 0;
+for (let i = 0; i < 5 * 60; i++) {
+  const ev = Rules.tick(missed, dt);
+  if (ev.some((e) => e.type === 'miss' || e.type === 'accel')) missAgain += 1;
+}
+assert.strictEqual(missAgain, 0);
+assert.strictEqual(missed.engaged, false);
+assert.strictEqual(missed.total, 0);
+assert.ok(missed.notes.some((note) => note.dist < 0), 'a later note can pass the bar without resetting');
+while (!missed.notes.some((note) => Math.abs(note.dist) <= Rules.hitWindowDist(0))) {
+  Rules.tick(missed, dt);
+}
+const resumed = Rules.press(missed);
+assert.strictEqual(resumed[0].type, 'hit');
+assert.strictEqual(missed.engaged, true);
+assert.strictEqual(missed.level, 0);
 
 const fresh = Rules.createState();
 Rules.press(fresh);
 const ignored = Rules.press(fresh);
 assert.deepStrictEqual(ignored, []);
+assert.strictEqual(fresh.engaged, false);
 assert.strictEqual(fresh.notes[0].dist, 1);
 assert.strictEqual(fresh.total, 0);
 
