@@ -66,7 +66,7 @@
   }
 
   function wipe(state) {
-    const engaged = !!state.engaged;
+    state.engaged = false;
     state.level = 0;
     state.segment = 0;
     state.total = 0;
@@ -75,7 +75,6 @@
     state.notes = [];
     state.storyDone = false;
     state.inputLock = 0;
-    state.engaged = engaged;
   }
 
   function arm(state) {
@@ -111,13 +110,11 @@
   }
 
   function press(state) {
-    const opening = !state.engaged;
+    if (!state.engaged && state.inputLock > 0) return [];
     state.engaged = true;
     const index = nearestIndex(state);
     if (index < 0) {
-      if (!opening && state.inputLock > 0) return [];
       arm(state);
-      state.engaged = true;
       return [{ type: 'empty' }];
     }
     state.notes.splice(index, 1);
@@ -127,6 +124,7 @@
   function tick(state, dt) {
     const events = [];
     if (!(dt > 0)) return events;
+    if (state.inputLock > 0) state.inputLock = Math.max(0, state.inputLock - dt);
     if (!state.engaged) {
       advanceNotes(state, dt);
       const keep = [];
@@ -136,7 +134,6 @@
       state.notes = keep;
       return events;
     }
-    if (state.inputLock > 0) state.inputLock = Math.max(0, state.inputLock - dt);
 
     state.clock += dt;
     state.segment += dt;
@@ -160,7 +157,6 @@
     for (let i = 0; i < state.notes.length; i++) {
       if (state.notes[i].dist < -win) {
         arm(state);
-        state.engaged = true;
         events.push({ type: 'miss' });
         return events;
       }
